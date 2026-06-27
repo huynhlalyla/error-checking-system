@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: aoi_mongodb
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    environment:
+      MONGO_INITDB_DATABASE: error-checking
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - aoi_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: aoi_redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - aoi_network
+
+volumes:
+  mongodb_data:
+  redis_data:
+
+networks:
+  aoi_network:
+    driver: bridge
