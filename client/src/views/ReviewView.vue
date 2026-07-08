@@ -88,9 +88,9 @@
               <div class="field">
                 <label>Gắn nhãn loại lỗi</label>
                 <select id="label-select" v-model="selectedLabel" class="input">
-                  <option value="">— Không phải lỗi —</option>
-                  <option v-for="dt in defectTypes" :key="dt._id" :value="dt.code">
-                    {{ dt.code }} — {{ dt.name }}
+                  <option value="">-- Đạt chuẩn (Không có lỗi) --</option>
+                  <option v-for="sample in samples" :key="sample._id" :value="sample.code">
+                    {{ sample.code }} - {{ sample.name }}
                   </option>
                 </select>
               </div>
@@ -119,7 +119,7 @@ const loading = ref(false)
 const modalImage = ref<any>(null)
 const selectedLabel = ref('')
 const submitting = ref(false)
-const defectTypes = ref<any[]>([])
+const samples = ref<any[]>([])
 
 const LIMIT = 12
 const totalPages = computed(() => Math.ceil(total.value / LIMIT))
@@ -143,7 +143,7 @@ async function submitApprove() {
   submitting.value = true
   try {
     await http.post(`/review/${modalImage.value._id}/approve`, {
-      defectTypeCode: selectedLabel.value || null,
+      sampleCode: selectedLabel.value || null,
     })
     images.value = images.value.filter((i) => i._id !== modalImage.value!._id)
     total.value--
@@ -205,8 +205,8 @@ function getStatusClass(status: string) {
 
 onMounted(async () => {
   fetchImages()
-  const dt: any = await http.get('/defect-types', { params: { active: 'true' } })
-  defectTypes.value = Array.isArray(dt) ? dt : dt.data ?? []
+  const dt: any = await http.get('/samples', { params: { active: 'true' } })
+  samples.value = Array.isArray(dt) ? dt : dt.data ?? []
 })
 </script>
 

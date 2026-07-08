@@ -5,14 +5,14 @@ import { ReviewController } from './review.controller';
 import { ReviewService } from './review.service';
 import { Image, ImageSchema } from '../images/schemas/image.schema';
 import { AiModel, AiModelSchema } from '../ai-model/schemas/ai-model.schema';
-import { DefectTypesModule } from '../defect-types/defect-types.module';
+import { SamplesModule } from '../samples/samples.module';
 import { QUEUE_TRAINING } from '../queue/queue.constants';
 import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
     ConfigModule,
-    DefectTypesModule,
+    SamplesModule,
     BullModule.registerQueue({ name: QUEUE_TRAINING }),
     MongooseModule.forFeature([
       { name: Image.name, schema: ImageSchema },

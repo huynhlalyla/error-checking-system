@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import { InjectQueue } from '@nestjs/bull';
 import type { Queue } from 'bull';
 import { Image, ImageDocument } from '../images/schemas/image.schema';
-import { DefectTypesService } from '../defect-types/defect-types.service';
+import { SamplesService } from '../samples/samples.service';
 import { AiModel } from '../ai-model/schemas/ai-model.schema';
 import { QUEUE_TRAINING, JOB_TRAINING } from '../queue/queue.constants';
 import { ConfigService } from '@nestjs/config';
@@ -15,25 +15,25 @@ export class ReviewService {
     @InjectModel(Image.name) private imageModel: Model<ImageDocument>,
     @InjectModel(AiModel.name) private aiModelModel: Model<any>,
     @InjectQueue(QUEUE_TRAINING) private trainingQueue: Queue,
-    private defectTypesService: DefectTypesService,
+    private samplesService: SamplesService,
     private configService: ConfigService,
   ) {}
 
-  async approve(imageId: string, defectTypeCode: string | null, reviewerId: string): Promise<ImageDocument> {
+  async approve(imageId: string, sampleCode: string | null, reviewerId: string): Promise<ImageDocument> {
     const image = await this.imageModel.findById(imageId);
     if (!image) throw new NotFoundException('Image not found');
     if (image.status !== 'pending') throw new BadRequestException('Image already reviewed');
 
-    let defectTypeId: any = null;
-    if (defectTypeCode) {
-      const defectType = await this.defectTypesService.findByCode(defectTypeCode);
-      if (!defectType) throw new NotFoundException(`Defect type "${defectTypeCode}" not found`);
-      defectTypeId = defectType._id;
-      await this.defectTypesService.addSampleFromReview(defectType._id.toString(), image.filePath, image.uploadedBy);
+    let sampleId: any = null;
+    if (sampleCode) {
+      const sample = await this.samplesService.findByCode(sampleCode);
+      if (!sample) throw new NotFoundException(`Sample "${sampleCode}" not found`);
+      sampleId = sample._id;
+      await this.samplesService.addSampleFromReview(sample._id.toString(), image.filePath, image.uploadedBy);
 
       // Kiểm tra ngưỡng training
       const threshold = this.configService.get<number>('TRAINING_THRESHOLD') ?? 20;
-      const updated = await this.defectTypesService.findById(defectType._id.toString());
+      const updated = await this.samplesService.findById(sample._id.toString());
       if (updated.sampleCount >= threshold && updated.sampleCount % threshold === 0) {
         await this.triggerTraining();
       }
@@ -43,7 +43,7 @@ export class ReviewService {
       imageId,
       {
         status: 'approved',
-        reviewedLabel: defectTypeId,
+        reviewedLabel: sampleId,
         reviewedBy: reviewerId,
         reviewedAt: new Date(),
       },
@@ -67,20 +67,20 @@ export class ReviewService {
   }
 
   private async triggerTraining(): Promise<void> {
-    const activeDefects = await this.defectTypesService.findAll(true);
-    const defectTypeIds = activeDefects.map((d) => d._id.toString());
+    const activeSamples = await this.samplesService.findAll(true);
+    const sampleIds = activeSamples.map((d) => d._id.toString());
 
     const version = `v${Date.now()}`;
     const newModel = await this.aiModelModel.create({
       version,
       status: 'training',
-      defectTypes: defectTypeIds,
+      trainedSamples: sampleIds,
       trainStartedAt: new Date(),
     });
 
     await this.trainingQueue.add(JOB_TRAINING, {
       modelId: newModel._id.toString(),
-      defectTypeIds,
+      sampleIds,
     });
   }
 }

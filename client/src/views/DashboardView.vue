@@ -166,11 +166,11 @@ const lineOptions = {
 // Pie chart data
 const COLORS = ['#3b82f6','#ef4444','#f59e0b','#10b981','#8b5cf6','#ec4899','#06b6d4']
 const pieChartData = computed(() => {
-  if (!stats.value?.byDefectType?.length) return null
+  if (!stats.value?.bySample?.length) return null
   return {
-    labels: stats.value.byDefectType.map((d: any) => d.code ?? 'Unknown'),
+    labels: stats.value.bySample.map((d: any) => d.code ?? 'Unknown'),
     datasets: [{
-      data: stats.value.byDefectType.map((d: any) => d.count),
+      data: stats.value.bySample.map((d: any) => d.count),
       backgroundColor: COLORS,
       borderWidth: 0,
     }],

@@ -14,8 +14,8 @@ export class Inspection {
   @Prop({ trim: true })
   location: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'DefectType', default: null })
-  defectType: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Sample', default: null })
+  detectedSample: Types.ObjectId;
 
   @Prop({ default: false })
   isDefective: boolean;
@@ -35,4 +35,4 @@ export class Inspection {
 
 export const InspectionSchema = SchemaFactory.createForClass(Inspection);
 InspectionSchema.index({ location: 1, inspectedAt: -1 });
-InspectionSchema.index({ defectType: 1, inspectedAt: -1 });
+InspectionSchema.index({ detectedSample: 1, inspectedAt: -1 });

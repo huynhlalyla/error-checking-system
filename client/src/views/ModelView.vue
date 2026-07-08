@@ -70,11 +70,13 @@
           </div>
           <div class="meta-item">
             <span class="meta-key">Số loại lỗi</span>
-            <span class="meta-val">{{ currentModel.defectTypes?.length ?? 0 }}</span>
+            <span class="meta-val">{{ currentModel.trainedSamples?.length ?? 0 }}</span>
           </div>
         </div>
-        <div class="defect-chips" v-if="currentModel.defectTypes?.length">
-          <span v-for="dt in currentModel.defectTypes" :key="dt._id" class="chip">{{ dt.code }}</span>
+        <div class="defect-chips" v-if="groupedTrainedSamples.length">
+          <span v-for="product in groupedTrainedSamples" :key="product._id" class="chip" :title="product.defects.length ? 'Các lỗi: ' + product.defects.join(', ') : 'Không có lỗi nào được train'">
+            {{ product.name || product.code }}
+          </span>
         </div>
       </div>
     </div>
@@ -135,6 +137,25 @@ const progressData = computed(() => ({
   progress: progressStore.trainingProgress || 0,
   message: progressStore.trainingMessage
 }))
+
+const groupedTrainedSamples = computed(() => {
+  if (!currentModel.value?.trainedSamples) return []
+  const samples = currentModel.value.trainedSamples
+  const products = samples.filter((s: any) => s.type === 'PRODUCT')
+  const defects = samples.filter((s: any) => s.type === 'DEFECT')
+  
+  return products.map((p: any) => {
+    const pId = p._id.toString()
+    const relatedDefects = defects.filter((d: any) => {
+      if (!d.targetProductId) return false
+      return d.targetProductId.toString() === pId || d.targetProductId._id?.toString() === pId
+    })
+    return {
+      ...p,
+      defects: relatedDefects.map((d: any) => d.name || d.code)
+    }
+  })
+})
 
 async function fetchData() {
   const [cur, hist]: [any, any] = await Promise.all([

@@ -17,8 +17,8 @@ export class AiModel {
   @Prop({ default: 0 })
   trainedOn: number;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'DefectType' }], default: [] })
-  defectTypes: Types.ObjectId[];
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Sample' }], default: [] })
+  trainedSamples: Types.ObjectId[];
 
   @Prop({ default: null })
   trainStartedAt: Date;

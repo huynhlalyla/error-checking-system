@@ -17,8 +17,8 @@ export class Alert {
   @Prop({ trim: true })
   location: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'DefectType', default: null })
-  defectType: Types.ObjectId;
+  @Prop({ type: Types.ObjectId, ref: 'Sample', default: null })
+  sample: Types.ObjectId;
 
   @Prop({ required: true })
   message: string;

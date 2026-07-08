@@ -25,7 +25,7 @@ export class AlertsService {
     const [data, total] = await Promise.all([
       this.alertModel
         .find(filter)
-        .populate('defectType', 'code name')
+        .populate('sample', 'code name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -47,17 +47,17 @@ export class AlertsService {
     type: string;
     severity: string;
     location?: string;
-    defectType?: string;
+    sample?: string;
     message: string;
   }): Promise<AlertDocument> {
     const alert = await this.alertModel.create(data);
-    const populated = await this.alertModel.findById(alert._id).populate('defectType', 'code name');
+    const populated = await this.alertModel.findById(alert._id).populate('sample', 'code name');
     this.eventsGateway.emitAlert(populated);
     return alert;
   }
 
   /** Phân tích ngưỡng cảnh báo sau mỗi lần inference */
-  async analyzeAndAlert(location?: string, defectTypeId?: string): Promise<void> {
+  async analyzeAndAlert(location?: string, sampleId?: string): Promise<void> {
     if (!location) return;
     try {
       const now = new Date();

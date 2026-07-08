@@ -78,8 +78,8 @@ export class ImagesService {
       this.imageModel
         .find(filter)
         .populate('uploadedBy', 'username role')
-        .populate('predictedLabel', 'code name severity')
-        .populate('reviewedLabel', 'code name severity')
+        .populate('predictedLabel', 'code name type')
+        .populate('reviewedLabel', 'code name type')
         .populate('reviewedBy', 'username')
         .sort({ createdAt: -1 })
         .skip(skip)

@@ -23,14 +23,14 @@ export class InspectionsService {
     page: number;
     limit: number;
     location?: string;
-    defectType?: string;
+    detectedSample?: string;
     isDefective?: boolean;
     from?: string;
     to?: string;
   }) {
     const filter: any = {};
     if (options.location) filter.location = options.location;
-    if (options.defectType) filter.defectType = options.defectType;
+    if (options.detectedSample) filter.detectedSample = options.detectedSample;
     if (options.isDefective !== undefined) filter.isDefective = options.isDefective;
     if (options.from || options.to) {
       filter.inspectedAt = {};
@@ -43,7 +43,11 @@ export class InspectionsService {
       this.inspectionModel
         .find(filter)
         .populate('imageId', 'filePath source confidence')
-        .populate('defectType', 'code name severity')
+        .populate({
+          path: 'detectedSample',
+          select: 'code name type targetProductId',
+          populate: { path: 'targetProductId', select: 'code name' }
+        })
         .sort({ inspectedAt: -1 })
         .skip(skip)
         .limit(options.limit)
@@ -122,13 +126,13 @@ export class InspectionsService {
       this.inspectionModel.countDocuments(dateFilter),
       this.inspectionModel.countDocuments({ ...dateFilter, isDefective: true }),
 
-      // Phân bổ theo loại lỗi
+      // Phân bổ theo loại mẫu (Thành phẩm/Lỗi)
       this.inspectionModel.aggregate([
         { $match: { ...dateFilter, isDefective: true } },
-        { $group: { _id: '$defectType', count: { $sum: 1 } } },
-        { $lookup: { from: 'defecttypes', localField: '_id', foreignField: '_id', as: 'defectType' } },
-        { $unwind: { path: '$defectType', preserveNullAndEmptyArrays: true } },
-        { $project: { code: '$defectType.code', name: '$defectType.name', count: 1 } },
+        { $group: { _id: '$detectedSample', count: { $sum: 1 } } },
+        { $lookup: { from: 'samples', localField: '_id', foreignField: '_id', as: 'detectedSample' } },
+        { $unwind: { path: '$detectedSample', preserveNullAndEmptyArrays: true } },
+        { $project: { code: '$detectedSample.code', name: '$detectedSample.name', count: 1 } },
         { $sort: { count: -1 } },
       ]),
 
@@ -163,7 +167,7 @@ export class InspectionsService {
       total: totalCount,
       defective: defectiveCount,
       defectRate: totalCount > 0 ? (defectiveCount / totalCount) : 0,
-      byDefectType,
+      bySample: byDefectType,
       byLine,
       byDay,
     };

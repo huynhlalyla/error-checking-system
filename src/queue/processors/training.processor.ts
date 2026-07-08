@@ -20,8 +20,8 @@ export class TrainingProcessor {
   ) {}
 
   @Process(JOB_TRAINING)
-  async handleTraining(job: Job<{ modelId: string; defectTypeIds: string[] }>) {
-    const { modelId, defectTypeIds } = job.data;
+  async handleTraining(job: Job<{ modelId: string; sampleIds: string[] }>) {
+    const { modelId, sampleIds } = job.data;
     this.logger.log(`Starting training for model ${modelId}`);
 
     try {
@@ -36,7 +36,7 @@ export class TrainingProcessor {
       // Gọi Python bắt đầu training (async - Python tự gọi callback khi xong)
       await axios.post(
         `${aiUrl}/train`,
-        { model_id: modelId, defect_type_ids: defectTypeIds },
+        { model_id: modelId, sample_ids: sampleIds },
         { headers: { 'x-internal-key': internalKey }, timeout: 10000 },
       );
 

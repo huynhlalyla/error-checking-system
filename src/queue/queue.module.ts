@@ -7,7 +7,7 @@ import { InferenceProcessor } from './processors/inference.processor';
 import { TrainingProcessor } from './processors/training.processor';
 import { Image, ImageSchema } from '../images/schemas/image.schema';
 import { Inspection, InspectionSchema } from '../inspections/schemas/inspection.schema';
-import { DefectType, DefectTypeSchema } from '../defect-types/schemas/defect-type.schema';
+import { Sample, SampleSchema } from '../samples/schemas/sample.schema';
 import { AiModel, AiModelSchema } from '../ai-model/schemas/ai-model.schema';
 import { AlertsModule } from '../alerts/alerts.module';
 import { GatewayModule } from '../gateway/gateway.module';
@@ -24,7 +24,7 @@ import { GatewayModule } from '../gateway/gateway.module';
     MongooseModule.forFeature([
       { name: Image.name, schema: ImageSchema },
       { name: Inspection.name, schema: InspectionSchema },
-      { name: DefectType.name, schema: DefectTypeSchema },
+      { name: Sample.name, schema: SampleSchema },
       { name: AiModel.name, schema: AiModelSchema },
     ]),
   ],

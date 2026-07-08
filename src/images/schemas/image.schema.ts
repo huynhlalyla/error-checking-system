@@ -23,7 +23,7 @@ export class Image {
   @Prop({ required: true, enum: ['pending', 'approved', 'rejected'], default: 'pending' })
   status: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'DefectType', default: null })
+  @Prop({ type: Types.ObjectId, ref: 'Sample', default: null })
   predictedLabel: Types.ObjectId;
 
   @Prop({ type: Number, min: 0, max: 1, default: null })
@@ -32,7 +32,7 @@ export class Image {
   @Prop({ default: false })
   isUnknown: boolean;
 
-  @Prop({ type: Types.ObjectId, ref: 'DefectType', default: null })
+  @Prop({ type: Types.ObjectId, ref: 'Sample', default: null })
   reviewedLabel: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'User', default: null })

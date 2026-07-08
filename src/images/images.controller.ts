@@ -36,10 +36,15 @@ export class ImagesController {
   uploadFromDevice(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
-    @Body('productId') productId: string,
-    @Body('location') location: string,
+    @Body('productId') productIdBody: string,
+    @Body('location') locationBody: string,
+    @Query('productId') productIdQuery: string,
+    @Query('location') locationQuery: string,
+    @Query('productionLine') productionLine: string,
   ) {
     if (!file) throw new BadRequestException('Image file is required');
+    const productId = productIdBody || productIdQuery;
+    const location = locationBody || locationQuery || productionLine;
     return this.imagesService.uploadFromDevice(file, req.user, productId, location);
   }
 
@@ -50,10 +55,15 @@ export class ImagesController {
   uploadFromInspector(
     @UploadedFile() file: Express.Multer.File,
     @Request() req: any,
-    @Body('productId') productId: string,
-    @Body('location') location: string,
+    @Body('productId') productIdBody: string,
+    @Body('location') locationBody: string,
+    @Query('productId') productIdQuery: string,
+    @Query('location') locationQuery: string,
+    @Query('productionLine') productionLine: string,
   ) {
     if (!file) throw new BadRequestException('Image file is required');
+    const productId = productIdBody || productIdQuery;
+    const location = locationBody || locationQuery || productionLine;
     return this.imagesService.uploadFromInspector(file, req.user, productId, location);
   }
 

@@ -73,7 +73,7 @@ class ApiDataset(Dataset):
         return img, label_idx
 
 
-async def start_training(model_id: str, defect_type_ids: list[str]):
+async def start_training(model_id: str, sample_ids: list[str]):
     """
     Pipeline huấn luyện MobileNetV2 bất đồng bộ.
     """

@@ -18,7 +18,7 @@
         <RouterLink v-for="item in navItems" :key="item.path" :to="item.path" class="nav-item" active-class="active">
           <span class="nav-icon" v-html="item.icon"></span>
           {{ item.label }}
-          <template v-if="item.path === '/defect-types' && progressStore.uploadProgress !== null && !route.path.startsWith('/defect-types')">
+          <template v-if="item.path === '/samples' && progressStore.uploadProgress !== null && !route.path.startsWith('/samples')">
             <div class="nav-progress">
               <div class="nav-progress-fill" :style="{ width: progressStore.uploadProgress + '%' }">
                 <span class="nav-progress-badge" style="color: var(--color-success)">{{ progressStore.uploadProgress }}%</span>
@@ -110,7 +110,7 @@ const navItems = [
   { path: '/dashboard',    label: 'Dashboard',    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>' },
   { path: '/inspections',  label: 'Kiểm Tra',     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>' },
   { path: '/review',       label: 'Duyệt Ảnh',    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M14 10l7-7M8 21H3v-6M10 14l-7 7"/></svg>' },
-  { path: '/defect-types', label: 'Loại Lỗi',     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' },
+  { path: '/samples',      label: 'Mẫu Vật',      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>' },
   { path: '/accounts',     label: 'Tài Khoản',    icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>' },
   { path: '/alerts',       label: 'Cảnh Báo',     icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>' },
   { path: '/model',        label: 'AI Model',      icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>' },
@@ -120,7 +120,7 @@ const pageTitles: Record<string, string> = {
   dashboard: 'Dashboard Tổng Quan',
   inspections: 'Lịch Sử Kiểm Tra',
   review: 'Duyệt & Gắn Nhãn Ảnh',
-  'defect-types': 'Quản Lý Loại Lỗi',
+  samples: 'Quản Lý Mẫu Vật',
   accounts: 'Quản Lý Tài Khoản',
   alerts: 'Cảnh Báo Rủi Ro',
   model: 'Quản Lý AI Model',

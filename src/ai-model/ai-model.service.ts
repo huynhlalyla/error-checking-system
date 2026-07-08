@@ -7,7 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
 import FormData from 'form-data';
 import { AiModel } from './schemas/ai-model.schema';
-import { DefectTypesService } from '../defect-types/defect-types.service';
+import { SamplesService } from '../samples/samples.service';
 import { EventsGateway } from '../gateway/events.gateway';
 import { QUEUE_TRAINING, JOB_TRAINING } from '../queue/queue.constants';
 
@@ -18,7 +18,7 @@ export class AiModelService {
   constructor(
     @InjectModel(AiModel.name) private aiModelModel: Model<any>,
     @InjectQueue(QUEUE_TRAINING) private trainingQueue: Queue,
-    @Inject(forwardRef(() => DefectTypesService)) private defectTypesService: DefectTypesService,
+    @Inject(forwardRef(() => SamplesService)) private samplesService: SamplesService,
     private eventsGateway: EventsGateway,
     private configService: ConfigService,
   ) {}
@@ -26,7 +26,7 @@ export class AiModelService {
   async getCurrent() {
     return this.aiModelModel
       .findOne({ status: 'active' })
-      .populate('defectTypes', 'code name')
+      .populate('trainedSamples', 'code name type targetProductId')
       .sort({ activatedAt: -1 });
   }
 
@@ -35,7 +35,7 @@ export class AiModelService {
     const [data, total] = await Promise.all([
       this.aiModelModel
         .find()
-        .populate('defectTypes', 'code name')
+        .populate('trainedSamples', 'code name type targetProductId')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit),
@@ -45,30 +45,30 @@ export class AiModelService {
   }
 
   async triggerManualTraining() {
-    const activeDefects = await this.defectTypesService.findAll(true);
-    const defectTypeIds = activeDefects.map((d) => d._id.toString());
+    const activeSamples = await this.samplesService.findAll(true);
+    const sampleIds = activeSamples.map((s) => s._id.toString());
     const version = `v${Date.now()}`;
     const newModel = await this.aiModelModel.create({
       version,
       status: 'training',
-      defectTypes: defectTypeIds,
+      trainedSamples: sampleIds,
       trainStartedAt: new Date(),
     });
     await this.trainingQueue.add(JOB_TRAINING, {
       modelId: newModel._id.toString(),
-      defectTypeIds,
+      sampleIds, // was defectTypeIds
     });
     return newModel;
   }
 
   async getTrainingDataset() {
-    const activeDefects = await this.defectTypesService.findAll(true);
-    const classes = activeDefects.map((d) => d.code);
+    const activeSamples = await this.samplesService.findAll(true);
+    const classes = activeSamples.map((s) => s.code);
     const samples: any[] = [];
-    for (const defect of activeDefects) {
-      if (!defect.sampleImages) continue;
-      for (const img of defect.sampleImages) {
-        samples.push({ filePath: img.filePath, label: defect.code });
+    for (const sample of activeSamples) {
+      if (!sample.sampleImages) continue;
+      for (const img of sample.sampleImages) {
+        samples.push({ filePath: img.filePath, label: sample.code });
       }
     }
     return { classes, samples };
@@ -95,24 +95,20 @@ export class AiModelService {
     }
   }
 
-  /** Callback từ Python AI service khi training xong */
   async onTrainingComplete(modelId: string, accuracy: number, trainedOn: number) {
     const model = await this.aiModelModel.findById(modelId);
     if (!model) throw new NotFoundException('Model not found');
 
-    // Archive model cũ
     await this.aiModelModel.updateMany(
       { status: 'active' },
       { status: 'archived' },
     );
 
-    // Cập nhật lastTrainedSampleCount cho tất cả các loại lỗi active
-    const activeDefects = await this.defectTypesService.findAll(true);
-    for (const dt of activeDefects) {
-      await this.defectTypesService.updateLastTrainedSampleCount(dt._id.toString(), dt.sampleCount);
+    const activeSamples = await this.samplesService.findAll(true);
+    for (const s of activeSamples) {
+      await this.samplesService.updateLastTrainedSampleCount(s._id.toString(), s.sampleCount);
     }
 
-    // Activate model mới
     const activated = await this.aiModelModel.findByIdAndUpdate(
       modelId,
       {
@@ -123,7 +119,7 @@ export class AiModelService {
         activatedAt: new Date(),
       },
       { new: true },
-    ).populate('defectTypes', 'code name');
+    ).populate('trainedSamples', 'code name type targetProductId');
 
     this.eventsGateway.emitModelUpdated(activated);
     return activated;
@@ -144,11 +140,11 @@ export class AiModelService {
         let actualReason = reason;
 
         if (!shouldTrain && !reason) {
-          const activeDefects = await this.defectTypesService.findAll(true);
-          for (const dt of activeDefects) {
-            if (Math.abs(dt.sampleCount - dt.lastTrainedSampleCount) >= 10) {
+          const activeSamples = await this.samplesService.findAll(true);
+          for (const s of activeSamples) {
+            if (Math.abs(s.sampleCount - s.lastTrainedSampleCount) >= 10) {
               shouldTrain = true;
-              actualReason = `Tự động huấn luyện: Loại lỗi ${dt.code} có số lượng ảnh thay đổi (${dt.lastTrainedSampleCount} -> ${dt.sampleCount})`;
+              actualReason = `Tự động huấn luyện: Mẫu vật ${s.code} có số lượng ảnh thay đổi (${s.lastTrainedSampleCount} -> ${s.sampleCount})`;
               break;
             }
           }
@@ -157,7 +153,6 @@ export class AiModelService {
         }
 
         if (shouldTrain) {
-          // Double check before creating to prevent race conditions from concurrent timeouts
           const stillTraining = await this.aiModelModel.exists({ status: 'training' });
           if (!stillTraining) {
             await this.triggerManualTraining();
@@ -167,7 +162,7 @@ export class AiModelService {
       } catch (error) {
         console.error('Error during auto-training check:', error);
       }
-    }, 5000); // 5 seconds debounce
+    }, 5000);
   }
 
   async getTrainingProgress() {
@@ -185,21 +180,19 @@ export class AiModelService {
     if (!model) return null;
 
     if (model.retryCount < 2 && reason !== 'Đã gửi yêu cầu huỷ huấn luyện') {
-      // Auto-retry
       model.retryCount += 1;
       model.status = 'training';
       await model.save();
 
       await this.trainingQueue.add(JOB_TRAINING, {
         modelId: model._id.toString(),
-        defectTypeIds: model.defectTypes.map((id) => id.toString()),
+        sampleIds: model.trainedSamples.map((id: any) => id.toString()),
       });
       console.log(`Model ${modelId} failed (${reason}). Retrying... (${model.retryCount}/2)`);
       this.eventsGateway.emitModelUpdated(model);
       return model;
     }
 
-    // No retries left or manually cancelled
     const failed = await this.aiModelModel.findByIdAndUpdate(
       modelId,
       {
@@ -232,7 +225,6 @@ export class AiModelService {
       console.error('Failed to send cancel request to AI Service', e);
     }
 
-    // AI Service will eventually send 'training-failed', but we can pre-emptively archive it
     return this.onTrainingFailed(id, 'Đã gửi yêu cầu huỷ huấn luyện');
   }
 

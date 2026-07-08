@@ -10,7 +10,7 @@ router = APIRouter(prefix="/train", tags=["training"])
 
 class TrainRequest(BaseModel):
     model_id: str
-    defect_type_ids: List[str]
+    sample_ids: List[str]
 
 
 @router.post("")
@@ -23,7 +23,7 @@ async def trigger_training(
     Kích hoạt training pipeline bất đồng bộ.
     Model active KHÔNG bị gián đoạn trong quá trình training.
     """
-    background_tasks.add_task(start_training, body.model_id, body.defect_type_ids)
+    background_tasks.add_task(start_training, body.model_id, body.sample_ids)
     return {"message": "Training started in background", "model_id": body.model_id}
 
 @router.get("/progress")

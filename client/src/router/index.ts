@@ -34,14 +34,14 @@ const router = createRouter({
           component: () => import('@/views/ReviewView.vue'),
         },
         {
-          path: 'defect-types',
-          name: 'defect-types',
-          component: () => import('@/views/DefectTypesView.vue'),
+          path: 'samples',
+          name: 'samples',
+          component: () => import('@/views/SamplesView.vue'),
         },
         {
-          path: 'defect-types/:code',
-          name: 'defect-type-detail',
-          component: () => import('@/views/DefectTypeDetailView.vue'),
+          path: 'samples/:code',
+          name: 'sample-detail',
+          component: () => import('@/views/SampleDetailView.vue'),
         },
         {
           path: 'accounts',

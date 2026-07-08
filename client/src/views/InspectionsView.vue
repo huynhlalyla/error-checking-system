@@ -39,7 +39,13 @@
                 <span v-else>—</span>
                 <div v-if="item.isIncorrect" class="incorrect-stamp">SAI SÓT</div>
               </td>
-              <td @click="openModal(item)"><span class="mono">{{ item.productId ?? '—' }}</span></td>
+              <td @click="openModal(item)">
+                <span v-if="item.status === 'processing'" class="mono text-muted">Đang phân tích...</span>
+                <span v-else-if="item.detectedSample" class="mono">
+                  {{ item.detectedSample.type === 'DEFECT' ? (item.detectedSample.targetProductId?.name || item.detectedSample.targetProductId?.code || '—') : (item.detectedSample.name || item.detectedSample.code) }}
+                </span>
+                <span v-else class="mono">—</span>
+              </td>
               <td @click="openModal(item)">{{ item.location ?? '—' }}</td>
               <td @click="openModal(item)">
                 <div v-if="item.status === 'processing'" class="loader-spinner" style="margin: 0 auto;"></div>
@@ -48,18 +54,18 @@
                 <span v-else class="badge badge-approved">Đạt</span>
               </td>
               <td @click="openModal(item)">
-                <div v-if="item.status === 'processing'" class="loader-spinner" style="margin: 0 auto;"></div>
+                <span v-if="item.status === 'processing'" class="text-muted">—</span>
                 <span v-else>{{ item.imageId?.confidence ? (item.imageId.confidence * 100).toFixed(1) + '%' : '—' }}</span>
               </td>
               <td @click="openModal(item)">
-                <div v-if="item.status === 'processing'" class="loader-spinner" style="margin: 0 auto;"></div>
-                <span v-else-if="item.defectType">
-                  <span class="badge" :class="`badge-${item.defectType.severity}`">{{ item.defectType.code }}</span>
+                <span v-if="item.status === 'processing'" class="text-muted">—</span>
+                <span v-else-if="item.detectedSample && item.detectedSample.type === 'DEFECT'">
+                  <span class="badge badge-critical">{{ item.detectedSample.name || item.detectedSample.code }}</span>
                 </span>
                 <span v-else class="text-muted">—</span>
               </td>
               <td @click="openModal(item)">
-                <div v-if="item.status === 'processing'" class="loader-spinner" style="margin: 0 auto;"></div>
+                <span v-if="item.status === 'processing'" class="text-muted">—</span>
                 <span v-else class="mono">{{ item.modelVersion ?? '—' }}</span>
               </td>
               <td class="text-muted" @click="openModal(item)">{{ formatTime(item.inspectedAt) }}</td>
@@ -99,7 +105,9 @@
             <div class="modal-info">
               <div class="info-row">
                 <span class="info-label">Sản phẩm:</span>
-                <span class="info-value mono">{{ modalItem.productId || '—' }}</span>
+                <span class="info-value mono">
+                  {{ modalItem.status === 'processing' ? 'Đang phân tích...' : (modalItem.detectedSample ? (modalItem.detectedSample.type === 'DEFECT' ? (modalItem.detectedSample.targetProductId?.name || modalItem.detectedSample.targetProductId?.code || '—') : (modalItem.detectedSample.name || modalItem.detectedSample.code)) : (modalItem.productId || '—')) }}
+                </span>
               </div>
               <div class="info-row">
                 <span class="info-label">Vị trí:</span>
@@ -111,9 +119,9 @@
                 <span v-else-if="modalItem.isDefective" class="badge badge-high">Có lỗi</span>
                 <span v-else class="badge badge-approved">Đạt</span>
               </div>
-              <div class="info-row" v-if="modalItem.defectType">
-                <span class="info-label">Loại lỗi:</span>
-                <span class="badge" :class="`badge-${modalItem.defectType.severity}`">{{ modalItem.defectType.code }} - {{ modalItem.defectType.name }}</span>
+              <div class="info-row" v-if="modalItem.detectedSample">
+                <span class="info-label">Mẫu phát hiện:</span>
+                <span class="badge" :class="modalItem.detectedSample.type === 'DEFECT' ? 'badge-critical' : 'badge-success'">{{ modalItem.detectedSample.name || modalItem.detectedSample.code }}</span>
               </div>
               <div class="info-row">
                 <span class="info-label">Thời gian:</span>
